@@ -9,7 +9,7 @@ mainClass in (Compile, run) := Some("WebServer")
 crossScalaVersions := Seq("2.9.2", "2.11.5")
 
 libraryDependencies ++= Seq(
-	  "com.github.finagle" %% "finch-core" % "0.5.0-SNAPSHOT"
+	  "com.github.finagle" %% "finch-core" % "0.5.0"
 )
 
 resolvers ++= Seq(
