@@ -1,17 +1,17 @@
 name := """finch-seed"""
 
-version := "0.0.1-SNAPSHOT"
+version := "0.0.2-SNAPSHOT"
 
-scalaVersion := "2.11.5"
+scalaVersion := "2.11.7"
 
 mainClass in (Compile, run) := Some("WebServer") 
 
-crossScalaVersions := Seq("2.9.2", "2.11.5")
-
 libraryDependencies ++= Seq(
-	  "com.github.finagle" %% "finch-core" % "0.5.0"
+	"com.github.finagle" %% "finch-core" % "0.10.0",
+  "com.github.finagle" %% "finch-circe" % "0.10.0",
+  "io.circe" %% "circe-core" % "0.3.0",
+  "io.circe" %% "circe-generic" % "0.3.0",
+  "io.circe" %% "circe-jawn" % "0.3.0"
 )
 
-resolvers ++= Seq(
-	 Resolver.sonatypeRepo("snapshots")
-)
+resolvers += Resolver.sonatypeRepo("snapshots")

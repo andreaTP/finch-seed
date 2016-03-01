@@ -1,45 +1,27 @@
-import com.twitter.util.Await
-import java.net.InetSocketAddress
+
 import io.finch._
-import io.finch.request._
-import io.finch.response._
-import com.twitter.finagle._
-import com.twitter.finagle.Httpx
-import com.twitter.finagle.httpx._
-import com.twitter.finagle.httpx.path._
+import com.twitter.finagle.Http
+import com.twitter.finagle.http.{Response, Request}
+
+import com.twitter.util.Await
+import com.twitter.finagle.http.Status
+
+import io.circe._
+import io.circe.generic.auto._
+
+import io.circe.syntax._
 
 object WebServer extends App {
 
-  Await.ready(
-    Httpx.serve(
-      new InetSocketAddress("localhost", 9090),
-      MyEndpoint))
+  //curl 'http://localhost:9090/hello/pippo'
+  val hello = get("hello" :: string) { name : String =>
+    Ok(s"Hello, $name")
+  }
 
-}
-
-object MyEndpoint extends Endpoint[HttpRequest, HttpResponse] {
-
-  def route = {
-    case Method.Get -> Root / "hello" / name =>
-      //curl 'http://localhost:9090/hello/Andrea'
-      Service.mk(req =>
-        Ok(s"Hello ${name}").toFuture
-      )
-    case Method.Post -> Root / "user" =>
-      //curl -X POST 'http://localhost:9090/user?name=Andrea&age=65'
-      Service.mk(req => {
-        for {
-          name <- RequiredParam("name")(req)
-          age <- RequiredParam("age")(req).map(_.toInt)
-        } yield {
-          val user = User(name, age)
-          Ok(s"Hello ${user.greet}")
-        }
-      })
-    case _ -> path =>
-      Service.mk(req =>
-        BadRequest(s"Service not found for path: ${path.toString.replace(Root.toString, "")}").toFuture
-      )
+  //curl -X POST 'http://localhost:9090/user?name=Andrea&age=65'
+  val user = post("user" :: param("name") :: param("age").as[Int]) { (name: String, age: Int) =>
+    val user = User(name, age)
+    Ok(s"Hello ${user.greet}")
   }
 
   case class User(name: String, age: Int) {
@@ -50,4 +32,16 @@ object MyEndpoint extends Endpoint[HttpRequest, HttpResponse] {
     val greet = s"Hey ${name} you are ${yo}"
   }
 
+  val notFound: Endpoint[String] = * {
+    Output.payload("Service not found", Status.NotFound) 
+  }
+
+  val api = (hello :+: user :+: notFound).handle {
+    case e: Exception => BadRequest(e)
+  }
+
+  Await.ready(
+    Http.serve(
+      "localhost:9090",
+      api.toService))
 }
